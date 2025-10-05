@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satellite Image Dehazing Results Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .troubleshooting-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 5px solid #3498db;
+        }
+
+        .troubleshooting-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .common-issues {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .issue-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #e74c3c;
+            transition: transform 0.2s ease;
+        }
+
+        .issue-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .issue-card h3 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .issue-card .symptoms {
+            background: #fff5f5;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 0.9em;
+        }
+
+        .issue-card .solution {
+            background: #f0fff4;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 0.9em;
+        }
+
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .solution-steps {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .solution-steps h2 {
+            color: #27ae60;
+            margin-bottom: 20px;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .step-number {
+            background: #27ae60;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .step-content h3 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .step-content p {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .image-gallery {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .image-gallery h2 {
+            color: #8e44ad;
+            margin-bottom: 20px;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .image-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+
+        .image-card:hover {
+            transform: scale(1.02);
+        }
+
+        .image-card img {
+            max-width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .image-card h4 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .image-card p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            color: #0c5460;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+        }
+
+        .tab:hover {
+            background: #f8f9fa;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .common-issues {
+                grid-template-columns: 1fr;
+            }
+
+            .gallery-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛰️ Satellite Image Dehazing Troubleshooter</h1>
+            <p>Comprehensive guide to fix invisible dehazing results</p>
+        </div>
+
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('diagnosis')">🔍 Problem Diagnosis</button>
+                <button class="tab" onclick="showTab('solutions')">🛠️ Solutions</button>
+                <button class="tab" onclick="showTab('examples')">📸 Examples</button>
+                <button class="tab" onclick="showTab('tools')">🔧 Tools</button>
+            </div>
+
+            <div id="diagnosis" class="tab-content active">
+                <div class="troubleshooting-section">
+                    <h2>🚨 Why Your Dehazed Image Is Not Visible</h2>
+                    
+                    <div class="alert alert-info">
+                        <strong>Quick Check:</strong> 90% of invisible dehazing results are caused by data type and value range issues!
+                    </div>
+
+                    <div class="common-issues">
+                        <div class="issue-card">
+                            <h3>❌ Data Type Mismatch</h3>
+                            <div class="symptoms">
+                                <strong>Symptoms:</strong> Black/white image, no visible content, extreme values
+                            </div>
+                            <div class="solution">
+                                <strong>Quick Fix:</strong><br>
+                                <code>result = (np.clip(dehazed, 0, 1) * 255).astype(np.uint8)</code>
+                            </div>
+                        </div>
+
+                        <div class="issue-card">
+                            <h3>⚪ Wrong Value Range</h3>
+                            <div class="symptoms">
+                                <strong>Symptoms:</strong> All black, all white, no contrast
+                            </div>
+                            <div class="solution">
+                                <strong>Quick Fix:</strong><br>
+                                <code>cv2.normalize(image, None, 0, 255, cv2.NORM_MINMAX)</code>
+                            </div>
+                        </div>
+
+                        <div class="issue-card">
+                            <h3>🔍 Insufficient Contrast</h3>
+                            <div class="symptoms">
+                                <strong>Symptoms:</strong> Subtle differences, still hazy, minimal improvement
+                            </div>
+                            <div class="solution">
+                                <strong>Quick Fix:</strong><br>
+                                Apply histogram equalization after dehazing
+                            </div>
+                        </div>
+
+                        <div class="issue-card">
+                            <h3>⚙️ Algorithm Parameters</h3>
+                            <div class="symptoms">
+                                <strong>Symptoms:</strong> Over-correction, under-correction, artifacts
+                            </div>
+                            <div class="solution">
+                                <strong>Quick Fix:</strong><br>
+                                Adjust transmission map and atmospheric light parameters
+                            </div>
+                        </div>
+
+                        <div class="issue-card">
+                            <h3>🎨 Color Space Issues</h3>
+                            <div class="symptoms">
+                                <strong>Symptoms:</strong> Color distortion, channel misalignment
+                            </div>
+                            <div class="solution">
+                                <strong>Quick Fix:</strong><br>
+                                Ensure RGB channel order (not BGR)
+                            </div>
+                        </div>
+
+                        <div class="issue-card">
+                            <h3>💾 File Format Problems</h3>
+                            <div class="symptoms">
+                                <strong>Symptoms:</strong> Can't open file, corrupted display
+                            </div>
+                            <div class="solution">
+                                <strong>Quick Fix:</strong><br>
+                                Validate file permissions and format compatibility
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="solutions" class="tab-content">
+                <div class="solution-steps">
+                    <h2>✅ Step-by-Step Solutions</h2>
+
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Check Data Types & Ranges</h3>
+                            <p>First, always inspect your image data:</p>
+                            <div class="code-block">
+print(f"Original: {original.shape}, {original.dtype}, range: [{original.min()}, {original.max()}]")
+print(f"Dehazed: {dehazed.shape}, {dehazed.dtype}, range: [{dehazed.min()}, {dehazed.max()}]")</div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Normalize for Display</h3>
+                            <p>Convert any processed image to proper display format:</p>
+                            <div class="code-block">
+# Method 1: For float images [0,1]
+display_image = (np.clip(dehazed_float, 0, 1) * 255).astype(np.uint8)
+
+# Method 2: For any range
+normalized = (dehazed - dehazed.min()) / (dehazed.max() - dehazed.min())
+display_image = (normalized * 255).astype(np.uint8)</div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Apply Contrast Enhancement</h3>
+                            <p>If dehazing is subtle, enhance contrast:</p>
+                            <div class="code-block">
+# CLAHE (Recommended)
+clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
+enhanced = clahe.apply(dehazed_uint8)
+
+# Or histogram equalization
+enhanced = cv2.equalizeHist(dehazed_uint8)</div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h3>Validate Results</h3>
+                            <p>Check that dehazing actually improved the image:</p>
+                            <div class="code-block">
+# Calculate contrast improvement
+orig_contrast = np.std(cv2.cvtColor(original, cv2.COLOR_RGB2GRAY))
+dehazed_contrast = np.std(cv2.cvtColor(dehazed, cv2.COLOR_RGB2GRAY))
+improvement = dehazed_contrast / orig_contrast
+print(f"Contrast improvement: {improvement:.2f}x")</div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <h3>Save Properly</h3>
+                            <p>Ensure proper file saving:</p>
+                            <div class="code-block">
+# Validate before saving
+if dehazed.dtype != np.uint8:
+    dehazed = (np.clip(dehazed, 0, 1) * 255).astype(np.uint8)
+
+# Save with proper format
+cv2.imwrite('dehazed_result.png', cv2.cvtColor(dehazed, cv2.COLOR_RGB2BGR))
+# Or use PIL
+Image.fromarray(dehazed).save('dehazed_result.png')</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-success">
+                    <strong>Pro Tip:</strong> Always save intermediate steps during debugging to identify exactly where the issue occurs.
+                </div>
+            </div>
+
+            <div id="examples" class="tab-content">
+                <div class="image-gallery">
+                    <h2>📸 Example Results</h2>
+                    <p>Below are examples showing the difference between problematic and correct dehazing outputs:</p>
+
+                    <div class="alert alert-info">
+                        <strong>Note:</strong> Check the 'dehaze_results_sample_hazy_satellite' directory for actual processed examples from your system.
+                    </div>
+
+                    <div class="gallery-grid">
+                        <div class="image-card">
+                            <div style="background: #f0f0f0; height: 200px; display: flex; align-items: center; justify-content: center; border-radius: 5px; margin-bottom: 10px;">
+                                <span style="color: #666;">Original Hazy Image</span>
+                            </div>
+                            <h4>Original</h4>
+                            <p>Satellite image with atmospheric haze affecting visibility</p>
+                        </div>
+
+                        <div class="image-card">
+                            <div style="background: #000; height: 200px; display: flex; align-items: center; justify-content: center; border-radius: 5px; margin-bottom: 10px;">
+                                <span style="color: #fff;">❌ Black Image</span>
+                            </div>
+                            <h4>Problem: All Black</h4>
+                            <p>Result of incorrect data type conversion</p>
+                        </div>
+
+                        <div class="image-card">
+                            <div style="background: #fff; height: 200px; display: flex; align-items: center; justify-content: center; border-radius: 5px; margin-bottom: 10px; border: 1px solid #ddd;">
+                                <span style="color: #666;">❌ White Image</span>
+                            </div>
+                            <h4>Problem: All White</h4>
+                            <p>Result of values exceeding display range</p>
+                        </div>
+
+                        <div class="image-card">
+                            <div style="background: linear-gradient(45deg, #e8e8e8, #f5f5f5); height: 200px; display: flex; align-items: center; justify-content: center; border-radius: 5px; margin-bottom: 10px;">
+                                <span style="color: #666;">⚠️ Low Contrast</span>
+                            </div>
+                            <h4>Problem: No Visible Change</h4>
+                            <p>Dehazing worked but needs contrast enhancement</p>
+                        </div>
+
+                        <div class="image-card">
+                            <div style="background: linear-gradient(135deg, #4CAF50, #81C784); height: 200px; display: flex; align-items: center; justify-content: center; border-radius: 5px; margin-bottom: 10px;">
+                                <span style="color: #fff;">✅ Good Result</span>
+                            </div>
+                            <h4>Correct: Visible Improvement</h4>
+                            <p>Proper dehazing with enhanced visibility</p>
+                        </div>
+
+                        <div class="image-card">
+                            <div style="background: linear-gradient(135deg, #2196F3, #64B5F6); height: 200px; display: flex; align-items: center; justify-content: center; border-radius: 5px; margin-bottom: 10px;">
+                                <span style="color: #fff;">✅ Enhanced</span>
+                            </div>
+                            <h4>Best: Contrast Enhanced</h4>
+                            <p>Dehazing + additional contrast enhancement</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tools" class="tab-content">
+                <div class="solution-steps">
+                    <h2>🔧 Available Tools</h2>
+                    
+                    <div class="alert alert-info">
+                        <strong>Ready-to-use tools in your directory:</strong>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>satellite_dehazing_debug.py</h3>
+                            <p>Comprehensive diagnostic tool that analyzes your images and identifies common issues.</p>
+                            <div class="code-block">python satellite_dehazing_debug.py</div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>practical_dehazing_solution.py</h3>
+                            <p>Multiple working dehazing algorithms with proper output handling and validation.</p>
+                            <div class="code-block">python practical_dehazing_solution.py</div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>SATELLITE_DEHAZING_TROUBLESHOOTING_GUIDE.md</h3>
+                            <p>Complete written guide with code examples and parameter tuning instructions.</p>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-success">
+                        <strong>Quick Start:</strong>
+                        <ol style="margin: 10px 0; padding-left: 20px;">
+                            <li>Place your satellite image as 'satellite_image.jpg' in the current directory</li>
+                            <li>Run: <code>python practical_dehazing_solution.py</code></li>
+                            <li>Check the 'dehaze_results_*' directory for outputs</li>
+                            <li>Compare different methods in the generated comparison image</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🛰️ Satellite Image Dehazing Troubleshooter | Built to solve visibility issues</p>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tab contents
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        // Add some interactivity
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate issue cards on load
+            const cards = document.querySelectorAll('.issue-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>
